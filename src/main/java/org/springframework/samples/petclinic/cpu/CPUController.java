@@ -13,20 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.samples.petclinic.io;
+package org.springframework.samples.petclinic.cpu;
 
+import java.util.List;
+import java.util.Map;
+
+import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
+
+import javax.validation.Valid;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 @Controller
-class URLController {
+class CPUController {
 
 	// @InitBinder
 	// public void setAllowedFields(WebDataBinder dataBinder) {
@@ -46,31 +63,32 @@ class URLController {
 	// return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	// }
 
-	@PostMapping("/io")
-	public String processIoRequest(URLRequest url, BindingResult result) {
+	@PostMapping("/cpu")
+	public String processCpuRequest(CPURequest cpu, BindingResult result) {
 		if (result.hasErrors()) {
 			return "redirect:/owners";
 		}
 		else {
 			try {
-				System.out.println(String.format("URL received is %s", url.getAddress()));
-				Path temp = Files.createTempFile("io-test", null);
-				BufferedInputStream in = new BufferedInputStream(new URL(url.getAddress()).openStream());
-				FileOutputStream fileOutputStream = new FileOutputStream(temp.toString());
-				byte dataBuffer[] = new byte[1024];
-				int bytesRead;
-				while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-					fileOutputStream.write(dataBuffer, 0, bytesRead);
-				}
-				System.out.println("Success!");
+				System.out.println(String.format("CPU number received is %d", cpu.getNumber()));
+				int sum = fibonacci(cpu.getNumber());
+				System.out.println(String.format("Result was %d", sum));
 			}
-			catch (IOException e) {
-				System.out.println("Exception!");
+			catch (Exception e) {
+				e.printStackTrace();
 			}
 
 		}
 
 		return "redirect:/owners";
+	}
+
+	private int fibonacci(int n) {
+		if (n <= 1) {
+			return 1;
+		}
+
+		return fibonacci(n - 1) + fibonacci(n - 2);
 	}
 
 }
