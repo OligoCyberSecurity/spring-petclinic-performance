@@ -19,6 +19,7 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.springframework.validation.BindingResult;
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.stereotype.Controller;
 
 @Controller
-class URLController {
+public class URLController {
 
 	// @InitBinder
 	// public void setAllowedFields(WebDataBinder dataBinder) {
@@ -47,25 +48,35 @@ class URLController {
 	// }
 
 	@PostMapping("/io")
-	public String processIoRequest(URLRequest url, BindingResult result) {
+	public String processIoRequest(URLRequest urlRequest, BindingResult result) {
 		if (result.hasErrors()) {
+			System.out
+					.println(String.format("TID: %s, Received results with errors!", Thread.currentThread().getName()));
 			return "redirect:/owners";
 		}
 		else {
 			try {
-				System.out.println(String.format("URL received is %s", url.getAddress()));
+				System.out.println(String.format("TID: %s, URL received is %s", Thread.currentThread().getName(),
+						urlRequest.getAddress()));
 				Path temp = Files.createTempFile("io-test", null);
-				BufferedInputStream in = new BufferedInputStream(new URL(url.getAddress()).openStream());
+				URL url = new URL(urlRequest.getAddress());
+				HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+				huc.setFollowRedirects(false);
+				huc.setConnectTimeout(10 * 1000);
+				huc.setReadTimeout(10 * 1000);
+
+				BufferedInputStream in = new BufferedInputStream(huc.getInputStream());
 				FileOutputStream fileOutputStream = new FileOutputStream(temp.toString());
 				byte dataBuffer[] = new byte[1024];
 				int bytesRead;
 				while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
 					fileOutputStream.write(dataBuffer, 0, bytesRead);
 				}
-				System.out.println("Success!");
+				System.out.println(String.format("TID: %s, Success!", Thread.currentThread().getName()));
 			}
 			catch (IOException e) {
-				System.out.println("Exception!");
+				System.out.println(
+						String.format("TID: %s, Exception! %s", Thread.currentThread().getName(), e.getMessage()));
 			}
 
 		}
